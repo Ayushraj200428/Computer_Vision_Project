@@ -1,27 +1,57 @@
 import numpy as np
 import cv2 as cv
 from PIL import Image
-from util import get_limits # Assumes this function is correctly implemented
+from util import get_limits 
 
-## --- Color Name Mapping ---
-# Define a dictionary mapping color names to their BGR values (OpenCV format)
 COLOR_MAP = {
+    # Basic colors
     "red": [0, 0, 255],
     "green": [0, 255, 0],
     "blue": [255, 0, 0],
+    "white": [255, 255, 255],
+    "black": [0, 0, 0],
+    "gray": [128, 128, 128],
+
+    # Secondary colors
     "yellow": [0, 255, 255],
     "cyan": [255, 255, 0],
     "magenta": [255, 0, 255],
-    "white": [255, 255, 255],
-    "black": [0, 0, 0]
-}
-## --- End Color Name Mapping ---
 
-## --- Color Selection Function ---
+    # Shades of red
+    "dark_red": [0, 0, 139],
+    "light_red": [102, 102, 255],
+    "maroon": [0, 0, 128],
+
+    # Shades of green
+    "dark_green": [0, 100, 0],
+    "light_green": [144, 238, 144],
+    "lime": [0, 255, 0],
+
+    # Shades of blue
+    "dark_blue": [139, 0, 0],
+    "light_blue": [230, 216, 173],
+    "navy": [128, 0, 0],
+
+    # Brown / orange family
+    "orange": [0, 165, 255],
+    "dark_orange": [0, 140, 255],
+    "brown": [42, 42, 165],
+
+    # Purple / pink family
+    "purple": [128, 0, 128],
+    "violet": [238, 130, 238],
+    "pink": [203, 192, 255],
+    "hot_pink": [180, 105, 255],
+
+    # Other useful colors
+    "gold": [0, 215, 255],
+    "silver": [192, 192, 192],
+    "teal": [128, 128, 0],
+    "olive": [0, 128, 128]
+}
+
 def get_user_color_by_name():
-    """
-    Prompts the user to enter a color name and returns the corresponding BGR value.
-    """
+    
     available_colors = ", ".join(COLOR_MAP.keys())
     print("\nColor Tracking Setup:")
     print(f"Available colors: **{available_colors}**")
@@ -34,12 +64,9 @@ def get_user_color_by_name():
         else:
             print(f"'{color_name}' is not recognized. Please enter one of the available color names.")
 
-# Get the color input from the user by name
 target_color_bgr = get_user_color_by_name()
 print(f"Tracking color (BGR): {target_color_bgr}")
-## --- End Color Selection ---
 
-# Initialize the camera
 cap = cv.VideoCapture(0)
 
 if not cap.isOpened():
@@ -47,40 +74,20 @@ if not cap.isOpened():
     exit()
 
 while True:
-    # 1. Capture frame-by-frame
     ret, frame = cap.read()
-
     if not ret:
         print("Error: Failed to read frame from camera.")
         break
-
-    # 2. Convert to HSV
     hsvImage = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
-
-    # 3. Get the color limits based on the user's input color (BGR)
     lowerLimit, upperLimit = get_limits(color=target_color_bgr) 
-
-    # 4. Create a mask
     mask = cv.inRange(hsvImage, lowerLimit, upperLimit)
-
-    # 5. Find bounding box (using PIL as in original code)
     mask_ = Image.fromarray(mask)
     bbox = mask_.getbbox()
-
-    # 6. Draw rectangle if the color is found
     if bbox is not None:
         x1, y1, x2, y2 = bbox
-
-        # Draw a rectangle around the detected area, using a green outline
         frame = cv.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 5) 
-
-    # 7. Display the resulting frame
     cv.imshow('Named Color Tracker', frame)
-
-    # 8. Exit condition
     if cv.waitKey(1) & 0xFF == ord('q'):
         break
-
-# 9. Cleanup
 cap.release()
 cv.destroyAllWindows()
